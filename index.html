@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.8;
+            overflow-x: hidden;
+        }
+        /* 滚动动效基础样式 */
+        .scroll-container {
+            scroll-snap-type: y mandatory;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .section {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            scroll-snap-align: start;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            padding: 20px;
+        }
+        /* 滚动时动效 */
+        .scroll-container::-webkit-scrollbar {
+            display: none;
+        }
+        .section.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .section.inactive {
+            opacity: 0.3;
+            transform: translateY(20px);
+        }
+        /* 渐变头像样式 */
+        .avatar-wrapper {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        .avatar {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            z-index: 2;
+            position: relative;
+        }
+        /* 彩色渐变边框（动态旋转） */
+        .gradient-border {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            width: 196px;
+            height: 196px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #ff8e8e);
+            background-size: 400% 400%;
+            animation: gradientRotate 8s linear infinite;
+            z-index: 1;
+        }
+        @keyframes gradientRotate {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        /* 文字样式 */
+        .name {
+            font-size: 36px;
+            font-weight: 600;
+            color: #222;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .title {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .intro-text {
+            font-size: 16px;
+            color: #555;
+            max-width: 600px;
+            text-align: center;
+            line-height: 2;
+        }
+        /* 第二屏样式 */
+        .section-2 {
+            background-color: #fff;
+            border-top-left-radius: 40px;
+            border-top-right-radius: 40px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+        .contact-title {
+            font-size: 28px;
+            color: #222;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        .contact-title::after {
+            content: '';
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            max-width: 700px;
+            width: 100%;
+        }
+        .contact-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            transition: transform 0.3s ease;
+        }
+        .contact-item:hover {
+            transform: translateY(-5px);
+        }
+        .contact-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 15px;
+        }
+        .contact-text h4 {
+            font-size: 16px;
+            color: #222;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .contact-text p {
+            font-size: 14px;
+            color: #777;
+            text-align: center;
+        }
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .avatar {
+                width: 150px;
+                height: 150px;
+            }
+            .gradient-border {
+                width: 166px;
+                height: 166px;
+            }
+            .name {
+                font-size: 28px;
+            }
+            .title {
+                font-size: 18px;
+            }
+            .intro-text {
+                font-size: 15px;
+            }
+            .contact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        // 滚动动效逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const scrollContainer = document.querySelector('.scroll-container');
+            const sections = document.querySelectorAll('.section');
+            
+            // 初始激活第一屏
+            sections[0].classList.add('active');
+            
+            scrollContainer.addEventListener('scroll', function() {
+                const scrollPosition = scrollContainer.scrollTop;
+                const windowHeight = window.innerHeight;
+                
+                sections.forEach((section, index) => {
+                    const sectionTop = section.offsetTop;
+                    // 计算当前屏是否在视野中
+                    if (scrollPosition >= sectionTop - windowHeight/2 && scrollPosition < sectionTop + windowHeight/2) {
+                        sections.forEach(s => s.classList.remove('active', 'inactive'));
+                        section.classList.add('active');
+                        // 非当前屏添加淡入效果
+                        sections.forEach((s, i) => {
+                            if (i !== index) s.classList.add('inactive');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="scroll-container">
+        <!-- 第一屏：头像+自我介绍 -->
+        <section class="section section-1">
+            <div class="avatar-wrapper">
+                <div class="gradient-border"></div>
+                <img src="d4379e1d103635f2673490eb19c442811752763946952.jpg" alt="个人头像" class="avatar">
+            </div>
+            <h1 class="name">羽秋</h1>
+            <p class="title">产品设计师 | 交互体验研究者</p>
+            <p class="intro-text">
+                专注于用户体验设计领域5年，擅长将商业需求与用户痛点转化为兼具美感与实用性的产品方案。
+                热衷于探索设计与技术的边界，习惯用数据驱动设计决策，曾主导多款千万级用户产品的交互重构。
+                坚信好的设计应如空气般自然，于无形处解决问题。
+            </p>
+        </section>
+        
+        <!-- 第二屏：联系信息 -->
+        <section class="section section-2">
+            <h2 class="contact-title">联系与信息</h2>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <<i class="fas fa-envelope"></</i>
+                    </div>
+                    <div class="contact-text">
+                        <h4>邮箱</h4>
+                        <p>2748954156@qq.com</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <<i class="fas fa-phone"></</i>
+                    </div>
+                    <div class="contact-text">
+                        <h4>电话</h4>
+                        <p>不愿透露</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <<i class="fas fa-map-marker-alt"></</i>
+                    </div>
+                    <div class="contact-text">
+                        <h4>所在地</h4>
+                        <p>广鸡</p>
+                    </div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon">
+                        <<i class="fas fa-globe"></</i>
+                    </div>
+                    <div class="contact-text">
+                        <h4>个人博客</h4>
+                        <p>blog.zhangsan.com</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>
